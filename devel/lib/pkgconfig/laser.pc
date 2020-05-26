@@ -1,0 +1,8 @@
+prefix=/home/zzz/laser_navigation/devel
+
+Name: laser
+Description: Description of laser
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/zzz/laser_navigation/devel/lib 
+Requires: roscpp rospy std_msgs
