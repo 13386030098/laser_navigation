@@ -1,2 +1,2 @@
-laser
+laser:robot_msgs
 -DCATKIN_DEVEL_PREFIX=/home/zzz/laser_navigation/devel -DCMAKE_INSTALL_PREFIX=/home/zzz/laser_navigation/install -G Unix Makefiles

@@ -1,0 +1,8 @@
+prefix=/home/zzz/laser_navigation/devel
+
+Name: robot_msgs
+Description: Description of robot_msgs
+Version: 0.0.0
+Cflags: -I/home/zzz/laser_navigation/devel/include
+Libs: -L/home/zzz/laser_navigation/devel/lib 
+Requires: 
