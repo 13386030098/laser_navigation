@@ -53,11 +53,12 @@ private:
   Eigen::Matrix<double,3,1> old_odometer;
   Eigen::Matrix<double,3,1> now_odometer;
 
-  double localization_x;
-  double localization_y;
 
 public:
   control_driver():
+   init_pos(true),
+   pos_list_k(0),
+   linear_interpolation(true),
    ratio(28),
    wheel_base(1.415),
    delta_t(0.01),
@@ -108,8 +109,8 @@ public:
 
   void localization_point_(const geometry_msgs::Pose2DPtr& path_point_msg)
   {
-    localization_x = path_point_msg->x;
-    localization_y = path_point_msg->y;
+    localization_pos.x = path_point_msg->x;
+    localization_pos.y = path_point_msg->y;
   }
 
   ~control_driver(){}
@@ -145,36 +146,60 @@ public:
         printf(">>Start CAN1 error\n");
         VCI_CloseDevice(VCI_USBCAN1,0);
       }
+
       ros::Rate loop_rate(5);//0.2s
       while (ros::ok()) {
 
-        double nearest_point_distance = 100;
-        double nearest_point_distance_temp = 0;
-        geometry_msgs::Pose2D goal_point_in_world_frame;
-        geometry_msgs::Pose2D goal_point_in_vehicle_frame;
-        int nearest_point_index;
-        for(int i=0; i<6; i++)
-        {
-          nearest_point_distance_temp = hypot(fabs(localization_pos.x - interpolation_pos_list[i].x),
-                                              fabs(localization_pos.y - interpolation_pos_list[i].y));
-          if(nearest_point_distance_temp < nearest_point_distance){
-            nearest_point_distance = nearest_point_distance_temp;
-            nearest_point_index = i;
-          }
-        }
+//        double nearest_point_distance = 100;//init distance compare value
+//        double nearest_point_distance_temp = 0;
+//        geometry_msgs::Pose2D goal_point_in_world_frame;
+//        geometry_msgs::Pose2D goal_point_in_vehicle_frame;
+//        int nearest_point_index;
+//        for(int i=0; i<6; i++)
+//        {
+//          nearest_point_distance_temp = hypot(fabs(localization_pos.x - interpolation_pos_list[i].x),
+//                                              fabs(localization_pos.y - interpolation_pos_list[i].y));
+//          if(nearest_point_distance_temp < nearest_point_distance){
+//            nearest_point_distance = nearest_point_distance_temp;
+//            nearest_point_index = i;
+//          }
+//        }
 
-        if(nearest_point_index < 5){
-          goal_point_in_world_frame = interpolation_pos_list[nearest_point_index + 1];
-          //change to self frame
-          double delta_x = goal_point_in_vehicle_frame.x;
-          double delta_y = goal_point_in_vehicle_frame.y;
-          double delta_theta = atan2(delta_y, delta_x);
-        }
+//        if(nearest_point_index < 5){
+//          goal_point_in_world_frame = interpolation_pos_list[nearest_point_index + 1];
+//          //change to self frame
+//          //need localization position
+//          Eigen::Matrix<double,2,1> desire_world_pos;
+//          Eigen::Matrix<double,2,1> actual_world_pos;
+//          Eigen::Matrix<double,2,1> pos_in_vehicle_frame;
+//          double world_orientation;
+//          desire_world_pos(0,0) = goal_point_in_world_frame.x;
+//          desire_world_pos(1,0) = goal_point_in_world_frame.y;
 
+//          actual_world_pos(0,0) = now_odometer(0,0);
+//          actual_world_pos(1,0) = now_odometer(1,0);
 
+//          world_orientation = now_odometer(2,0);
+//          pos_in_vehicle_frame = frame_world_to_vehicle_func(desire_world_pos, actual_world_pos, world_orientation);
 
-      walking_motor(100, 0x01);
-      steering_motor(3000);
+//          double delta_x = goal_point_in_vehicle_frame.x;
+//          double delta_y = goal_point_in_vehicle_frame.y;
+//          double delta_theta = atan2(delta_y, delta_x);
+
+//          if(fabs(delta_theta) >0.8){
+//            walking_motor(0, 0x01);
+////            steering_motor(1000);
+//          }else{
+//            walking_motor(100, 0x01);
+////            steering_motor(1000);
+//          }
+//        }
+//        if(nearest_point_index = 5){
+//          walking_motor(0, 0x01);
+//        }
+
+//      walking_motor(100, 0x01);
+//      steering_motor(3000);
 //      vehicle_status_func();
 //       up_down(2);
       ros::spinOnce();
@@ -182,7 +207,6 @@ public:
     }
     VCI_CloseDevice(VCI_USBCAN1, 0);
   }
-
 
   /*****************can driver********************/
   //velocity,0-8000对应0-8000rpm/min
@@ -292,9 +316,9 @@ public:
 //      std::cout << speed <<std::endl;
 
       if(forward == 1){
-        speed_double = pi/30 * speed /28;
+        speed_double = pi/30 * speed /ratio * 0.12;
       }else if(backward ==1){
-        speed_double = -pi/30 * speed /28;
+        speed_double = -pi/30 * speed /ratio * 0.12;
       }
 //      std::cout << angle <<std::endl;
 
