@@ -1,0 +1,8 @@
+prefix=/home/zzz/laser_navigation/devel
+
+Name: polar_scan_matcher
+Description: Description of polar_scan_matcher
+Version: 0.3.2
+Cflags: -I/home/zzz/laser_navigation/src/scan_tools-indigo/polar_scan_matcher/include
+Libs: -L/home/zzz/laser_navigation/devel/lib -lpolar_scan_matcher
+Requires: 

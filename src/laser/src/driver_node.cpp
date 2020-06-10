@@ -148,6 +148,7 @@ public:
       }
 
       ros::Rate loop_rate(5);//0.2s
+      int i=0;
       while (ros::ok()) {
 
 //        double nearest_point_distance = 100;//init distance compare value
@@ -198,7 +199,13 @@ public:
 //          walking_motor(0, 0x01);
 //        }
 
-//      walking_motor(100, 0x01);
+      walking_motor(100, 0x01);
+        if(i < 1000)
+        {
+          i++;
+          std::cout << i <<std::endl;
+          steering_motor(-40*i);//
+        }
 //      steering_motor(3000);
 //      vehicle_status_func();
 //       up_down(2);
@@ -211,7 +218,9 @@ public:
   /*****************can driver********************/
   //velocity,0-8000对应0-8000rpm/min
   //direction:forward,backward
-  //direction 0x01-forward,0x02-backward
+  //direction
+  //0x02-forward
+  //0x01-backward
   void walking_motor(short velocity,short direction)
   {
       VCI_CAN_OBJ send[1];
@@ -324,9 +333,9 @@ public:
 
 //      angle_double = angle;
       angle_double = -pi/180 * (angle/100);
-//      std::cout << angle_double <<std::endl;
+      std::cout << angle_double <<std::endl;
 
-      std::cout << speed_double <<std::endl;
+//      std::cout << speed_double <<std::endl;
       double agv_Linear_velocity  = speed_double*cos(angle_double);
       double agv_angular_velocity = speed_double*sin(angle_double)/wheel_base;
 

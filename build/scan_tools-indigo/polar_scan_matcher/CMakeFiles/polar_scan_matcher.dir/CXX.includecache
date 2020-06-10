@@ -1,0 +1,28 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/zzz/laser_navigation/src/scan_tools-indigo/polar_scan_matcher/include/polar_scan_matcher/polar_match.h
+stdio.h
+-
+iostream
+-
+unistd.h
+-
+math.h
+-
+stdlib.h
+-
+string.h
+-
+vector
+-
+
+/home/zzz/laser_navigation/src/scan_tools-indigo/polar_scan_matcher/src/polar_match.cpp
+polar_scan_matcher/polar_match.h
+/home/zzz/laser_navigation/src/scan_tools-indigo/polar_scan_matcher/src/polar_scan_matcher/polar_match.h
+

@@ -2,4 +2,4 @@
 source_root_dir = "/home/zzz/laser_navigation/src"
 whitelisted_packages = "".split(';') if "" != "" else []
 blacklisted_packages = "".split(';') if "" != "" else []
-underlay_workspaces = "/home/zzz/ws_moveit/devel;/home/zzz/franka_ros/devel;/opt/ros/kinetic".split(';') if "/home/zzz/ws_moveit/devel;/home/zzz/franka_ros/devel;/opt/ros/kinetic" != "" else []
+underlay_workspaces = "/home/zzz/laser_navigation/devel;/home/zzz/ws_moveit/devel;/home/zzz/franka_ros/devel;/opt/ros/kinetic".split(';') if "/home/zzz/laser_navigation/devel;/home/zzz/ws_moveit/devel;/home/zzz/franka_ros/devel;/opt/ros/kinetic" != "" else []

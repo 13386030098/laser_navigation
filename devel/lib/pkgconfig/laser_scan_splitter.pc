@@ -1,0 +1,8 @@
+prefix=/home/zzz/laser_navigation/devel
+
+Name: laser_scan_splitter
+Description: Description of laser_scan_splitter
+Version: 0.3.2
+Cflags: -I/home/zzz/laser_navigation/src/scan_tools-indigo/laser_scan_splitter/include
+Libs: -L/home/zzz/laser_navigation/devel/lib -llaser_scan_splitter
+Requires: roscpp nodelet sensor_msgs

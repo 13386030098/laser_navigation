@@ -1,0 +1,8 @@
+prefix=/home/zzz/laser_navigation/devel
+
+Name: handle_reflector
+Description: Description of handle_reflector
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/zzz/laser_navigation/devel/lib 
+Requires: 

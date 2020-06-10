@@ -1,0 +1,8 @@
+prefix=/home/zzz/laser_navigation/install
+
+Name: dummy_slam_broadcaster
+Description: Description of dummy_slam_broadcaster
+Version: 0.1.3
+Cflags: 
+Libs: -L/home/zzz/laser_navigation/install/lib 
+Requires: 

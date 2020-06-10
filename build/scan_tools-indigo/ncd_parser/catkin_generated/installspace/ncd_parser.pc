@@ -1,0 +1,8 @@
+prefix=/home/zzz/laser_navigation/install
+
+Name: ncd_parser
+Description: Description of ncd_parser
+Version: 0.3.2
+Cflags: 
+Libs: -L/home/zzz/laser_navigation/install/lib 
+Requires: 

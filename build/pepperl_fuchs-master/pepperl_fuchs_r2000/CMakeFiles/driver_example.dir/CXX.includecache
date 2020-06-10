@@ -1,0 +1,44 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/zzz/laser_navigation/src/pepperl_fuchs-master/pepperl_fuchs_r2000/include/pepperl_fuchs_r2000/packet_structure.h
+cstdint
+-
+vector
+-
+
+/home/zzz/laser_navigation/src/pepperl_fuchs-master/pepperl_fuchs_r2000/include/pepperl_fuchs_r2000/protocol_info.h
+vector
+-
+
+/home/zzz/laser_navigation/src/pepperl_fuchs-master/pepperl_fuchs_r2000/include/pepperl_fuchs_r2000/r2000_driver.h
+string
+-
+vector
+-
+map
+-
+boost/optional.hpp
+-
+pepperl_fuchs_r2000/protocol_info.h
+-
+pepperl_fuchs_r2000/packet_structure.h
+-
+
+/home/zzz/laser_navigation/src/pepperl_fuchs-master/pepperl_fuchs_r2000/src/example/driver_example.cpp
+iostream
+-
+string
+-
+thread
+-
+chrono
+-
+pepperl_fuchs_r2000/r2000_driver.h
+-
+

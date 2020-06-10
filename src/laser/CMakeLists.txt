@@ -12,12 +12,13 @@ endif()
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
+  tf
   std_msgs
   robot_msgs
 )
 
 catkin_package(
-  CATKIN_DEPENDS roscpp rospy std_msgs  
+  CATKIN_DEPENDS roscpp rospy std_msgs tf
 )
 
 include_directories(SYSTEM ${Boost_INCLUDE_DIR} ${EIGEN3_INCLUDE_DIRS})
@@ -31,7 +32,12 @@ include_directories(
 add_executable(driver_node src/driver_node.cpp)
 target_link_libraries(driver_node ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
+add_executable(demo_node src/demo.cpp)
+target_link_libraries(demo_node ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
+
 target_link_libraries(driver_node /home/zzz/laser_navigation/src/laser/include/laser/libcontrolcan.so pthread)
+target_link_libraries(demo_node /home/zzz/laser_navigation/src/laser/include/laser/libcontrolcan.so pthread)
 
 
 
