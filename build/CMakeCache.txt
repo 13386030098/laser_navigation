@@ -872,6 +872,12 @@ scan_tools_SOURCE_DIR:STATIC=/home/zzz/laser_navigation/src/scan_tools-indigo/sc
 //The directory containing a CMake configuration file for sensor_msgs.
 sensor_msgs_DIR:PATH=/opt/ros/kinetic/share/sensor_msgs/cmake
 
+//Value Computed by CMake
+singleSteeringWheelDriver_BINARY_DIR:STATIC=/home/zzz/laser_navigation/build/singleSteeringWheelDriver
+
+//Value Computed by CMake
+singleSteeringWheelDriver_SOURCE_DIR:STATIC=/home/zzz/laser_navigation/src/singleSteeringWheelDriver
+
 //The directory containing a CMake configuration file for smclib.
 smclib_DIR:PATH=/opt/ros/kinetic/share/smclib/cmake
 
@@ -1048,7 +1054,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_NM
 CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=18
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=19
 //ADVANCED property for variable: CMAKE_OBJCOPY
 CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJDUMP

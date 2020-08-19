@@ -1,4 +1,4 @@
-#include "ros/ros.h"
+﻿#include "ros/ros.h"
 #include <sstream>
 #include <stdio.h>
 #include <iostream>
@@ -9,7 +9,6 @@
 #include <cstdlib>
 #include "unistd.h"
 
-#include <tf/transform_listener.h>
 #include <robot_msgs/odometer.h>
 #include <geometry_msgs/Pose2D.h>
 
@@ -35,28 +34,25 @@ private:
 
   ros::NodeHandle nh_;
   ros::Publisher  odometer_pub_;
+  ros::Subscriber localization_sub_;
+  ros::Subscriber path_sub_;
 
   std::thread* control_thread_;
   std::thread* odometer_thread_;
-  std::thread* interpolation_thread_;
-
 
   std::vector<double>  world_pos_x;
   std::vector<double>  world_pos_y;
-  std::vector<geometry_msgs::PoseStamped>  interpolation_pos_list;
-  geometry_msgs::PoseStamped pos_start, pos_end;
-  tf::TransformListener listener;
-
+  std::vector<geometry_msgs::Pose2D>  interpolation_pos_list;
+  geometry_msgs::Pose2D pos_start, pos_end;
+  geometry_msgs::Pose2D localization_pos;
   int pos_list_k;
   bool init_pos;
-  bool symbol;
 
   bool linear_interpolation;
 
   Eigen::Matrix<double,3,1> old_odometer;
   Eigen::Matrix<double,3,1> now_odometer;
 
-  Eigen::Matrix<double,2,1> world_pos_command_x_y;//x,y,total 4 points
 
 public:
   control_driver():
@@ -66,99 +62,56 @@ public:
    ratio(28),
    wheel_base(1.415),
    delta_t(0.01),
-   old_odometer(0,0,0),
-   world_pos_command_x_y(0,0),
-   listener(ros::Duration(10)),
-   symbol(false)
+   old_odometer(0,0,0)
   {
-
-
     odometer_pub_ = nh_.advertise<robot_msgs::odometer>("/odometer", 100, true);
+    path_sub_ = nh_.subscribe("/path_point_", 100, &control_driver::one_path_point_, this);
+    localization_sub_ = nh_.subscribe("/localization_point_", 100, &control_driver::localization_point_,this);
 
     control_thread_ = new std::thread(boost::bind(&control_driver::control_func,this));// control thread
     odometer_thread_ = new std::thread(boost::bind(&control_driver::odometer_func,this));// odometer thread
-    interpolation_thread_ = new std::thread(boost::bind(&control_driver::interpolation_func,this));// odometer thread
   }
 
-  void interpolation_func()
+  void one_path_point_(const geometry_msgs::Pose2DPtr& path_point_msg)
   {
-
     if(init_pos){
-
-      tf::StampedTransform transform;
-      try{
-          listener.waitForTransform("/map", "/base_link", ros::Time(0), ros::Duration(10.0));
-          listener.lookupTransform("/map", "/base_link", ros::Time(0), transform);
-         }
-      catch (tf::TransformException ex)
-         {
-          ROS_ERROR("%s",ex.what());
-          ros::Duration(1.0).sleep();
-         }
-
-      geometry_msgs::PoseStamped start_base_link, start_map;
-      start_base_link.header.frame_id = "/base_link";
-      start_base_link.header.stamp = ros::Time::now();
-      start_base_link.pose.orientation.w = 1.0;
-
-      start_map.header.frame_id = "/map";
-      start_map.header.stamp = ros::Time::now();
-
-      listener.transformPose("/map",ros::Time(0),start_base_link,"/base_link",start_map);//self-position in map
-
-      world_pos_x.push_back(start_map.pose.position.x);//need to change
-      world_pos_y.push_back(start_map.pose.position.y);
+      world_pos_x.push_back(0);//need to change
+      world_pos_y.push_back(0);
       init_pos = false;
+    }
+    world_pos_x.push_back(path_point_msg->x);
+    world_pos_y.push_back(path_point_msg->y);
 
-      world_pos_x.push_back(world_pos_command_x_y(0,0));
-      world_pos_y.push_back(world_pos_command_x_y(1,0));
-
+    if(world_pos_x.size() >1){
       interpolation_pos_list.clear();
 
-      pos_start.header.frame_id = "/map";
-      pos_start.header.stamp = ros::Time::now();
-      pos_start.pose.position.x = world_pos_x[0];
-      pos_start.pose.position.y = world_pos_y[0];
-      pos_start.pose.orientation.w = 1.0;
+      pos_start.x = world_pos_x[pos_list_k];
+      pos_start.y = world_pos_y[pos_list_k];
 
-      pos_end.header.frame_id = "/map";
-      pos_end.header.stamp = pos_start.header.stamp;
-      pos_end.pose.position.x = world_pos_x[1];
-      pos_end.pose.position.y = world_pos_y[1];
-      pos_end.pose.orientation.w = 1.0;
+      pos_end.x = world_pos_x[pos_list_k+1];
+      pos_end.y = world_pos_y[pos_list_k+1];
+
+      pos_list_k ++;
 
       //straight line interpolation
       if(linear_interpolation){
         for(int i=0; i<5 ; i++){
-          geometry_msgs::PoseStamped pos_temp;
-
-          pos_temp.header.frame_id = "/map";
-          pos_temp.header.stamp = pos_start.header.stamp;
-          pos_temp.pose.position.x = pos_start.pose.position.x + i*(pos_end.pose.position.x - pos_start.pose.position.x)/5;
-          pos_temp.pose.position.y = pos_start.pose.position.y + i*(pos_end.pose.position.y - pos_start.pose.position.y)/5;
-          pos_temp.pose.orientation.w = 1.0;
+          geometry_msgs::Pose2D pos_temp;
+          pos_temp.x = pos_start.x + i*(pos_end.x - pos_start.x)/5;
+          pos_temp.y = pos_start.y + i*(pos_end.y - pos_start.y)/5;
           interpolation_pos_list.push_back(pos_temp);
-          std::cout << interpolation_pos_list[i] <<std::endl;
         }
       }
       interpolation_pos_list.push_back(pos_end);
     }
 
-    ros::Rate loop_rate(5);//0.2s
-    while (ros::ok()) {
-//      std::cout << "ok" <<std::endl;
-      ros::spinOnce();
-      loop_rate.sleep();
-}
   }
 
-
-//  void localization_point_(const geometry_msgs::Pose2DPtr& path_point_msg)
-//  {
-//    localization_pos.x = path_point_msg->x;
-//    localization_pos.y = path_point_msg->y;
-//  }
-
+  void localization_point_(const geometry_msgs::Pose2DPtr& path_point_msg)
+  {
+    localization_pos.x = path_point_msg->x;
+    localization_pos.y = path_point_msg->y;
+  }
 
   ~control_driver(){}
 
@@ -195,103 +148,67 @@ public:
       }
 
       ros::Rate loop_rate(5);//0.2s
-
+      int i=0;
       while (ros::ok()) {
-        std::cout << "ok" <<std::endl;
-        tf::StampedTransform transform;
-        try{
-            listener.waitForTransform("/map", "/base_link", ros::Time(0), ros::Duration(10.0));
-            listener.lookupTransform("/map", "/base_link", ros::Time(0), transform);
-           }
-        catch (tf::TransformException ex)
-           {
-            ROS_ERROR("%s",ex.what());
-            ros::Duration(1.0).sleep();
-           }
 
-        geometry_msgs::PoseStamped start_base_link, start_map;
-        start_base_link.header.frame_id = "/base_link";
-        start_base_link.header.stamp = ros::Time::now();
-        start_base_link.pose.orientation.w = 1.0;
+//        double nearest_point_distance = 100;//init distance compare value
+//        double nearest_point_distance_temp = 0;
+//        geometry_msgs::Pose2D goal_point_in_world_frame;
+//        geometry_msgs::Pose2D goal_point_in_vehicle_frame;
+//        int nearest_point_index;
+//        for(int i=0; i<6; i++)
+//        {
+//          nearest_point_distance_temp = hypot(fabs(localization_pos.x - interpolation_pos_list[i].x),
+//                                              fabs(localization_pos.y - interpolation_pos_list[i].y));
+//          if(nearest_point_distance_temp < nearest_point_distance){
+//            nearest_point_distance = nearest_point_distance_temp;
+//            nearest_point_index = i;
+//          }
+//        }
 
-        start_map.header.frame_id = "/map";
-        start_map.header.stamp = ros::Time::now();
+//        if(nearest_point_index < 5){
+//          goal_point_in_world_frame = interpolation_pos_list[nearest_point_index + 1];
+//          //change to self frame
+//          //need localization position
+//          Eigen::Matrix<double,2,1> desire_world_pos;
+//          Eigen::Matrix<double,2,1> actual_world_pos;
+//          Eigen::Matrix<double,2,1> pos_in_vehicle_frame;
+//          double world_orientation;
+//          desire_world_pos(0,0) = goal_point_in_world_frame.x;
+//          desire_world_pos(1,0) = goal_point_in_world_frame.y;
 
-        listener.transformPose("/map",ros::Time(0),start_base_link,"/base_link",start_map);//self-position in map
+//          actual_world_pos(0,0) = now_odometer(0,0);
+//          actual_world_pos(1,0) = now_odometer(1,0);
 
-        double nearest_point_distance = 100;//init distance compare value
-        double nearest_point_distance_temp = 0;
-        int nearest_point_index;
-        for(int i=0; i<6; i++)
+//          world_orientation = now_odometer(2,0);
+//          pos_in_vehicle_frame = frame_world_to_vehicle_func(desire_world_pos, actual_world_pos, world_orientation);
+
+//          double delta_x = goal_point_in_vehicle_frame.x;
+//          double delta_y = goal_point_in_vehicle_frame.y;
+//          double delta_theta = atan2(delta_y, delta_x);
+
+//          if(fabs(delta_theta) >0.8){
+//            walking_motor(0, 0x01);
+////            steering_motor(1000);
+//          }else{
+//            walking_motor(100, 0x01);
+////            steering_motor(1000);
+//          }
+//        }
+//        if(nearest_point_index = 5){
+//          walking_motor(0, 0x01);
+//        }
+
+      walking_motor(100, 0x01);
+        if(i < 1000)
         {
-          nearest_point_distance_temp = hypot(fabs(start_map.pose.position.x - interpolation_pos_list[i].pose.position.x),
-                                              fabs(start_map.pose.position.y - interpolation_pos_list[i].pose.position.y));
-          if(nearest_point_distance_temp < nearest_point_distance){
-            nearest_point_distance = nearest_point_distance_temp;
-            nearest_point_index = i;
-          }
+          i++;
+          std::cout << i <<std::endl;
+          steering_motor(-40*i);//
         }
-
-        geometry_msgs::PoseStamped temp_goal;
-        if(nearest_point_index < 5){
-          temp_goal = interpolation_pos_list[nearest_point_index+1];
-          symbol = 1;
-        }
-        if(nearest_point_index == 5){
-          temp_goal = interpolation_pos_list[5];
-
-          if(nearest_point_distance < 0.05){
-            walking_motor(0, 0x01);
-            symbol = 0;
-          }
-        }
-
-        if(symbol!=0){
-          try{
-                listener.waitForTransform("/base_link", "/map", ros::Time(0), ros::Duration(10.0) );
-                listener.lookupTransform("/base_link", "/map", ros::Time(0), transform);
-               }
-           catch (tf::TransformException ex){
-            ROS_ERROR("%s",ex.what());
-            ros::Duration(1.0).sleep();
-            }
-            geometry_msgs::PoseStamped temp_goal_base_link, temp_goal_map;
-            temp_goal_base_link.header.frame_id = "/base_link";
-            temp_goal_base_link.header.stamp = ros::Time::now();
-            temp_goal_map = temp_goal;
-
-           listener.transformPose("/base_link",ros::Time(0),temp_goal_map,"/map",temp_goal_base_link);
-
-           double dx = temp_goal_base_link.pose.position.x;
-           double dy = temp_goal_base_link.pose.position.y;
-           double dtheta = atan2(dy, dx);
-           if(fabs(dtheta) > pi/2){
-             if(dtheta < 0){
-               dtheta = dtheta + pi;
-               std::cout << dtheta << std::endl;
-             }
-
-           }
-//           if(fabs(dtheta) > 0.8){
-//             walking_motor(0, 0x01);
-//             steering_motor(dtheta*18000/pi);
-
-//           }else{
-//             walking_motor(100, 0x01);
-//             steering_motor(dtheta*18000/pi);
-//           }
-
-           if(dx > 0){
-             walking_motor(100, 0x01);
-             steering_motor(dtheta*18000/pi);
-           }
-           if(dx < 0 )
-            walking_motor(100, 0x02);
-            steering_motor(dtheta*18000/pi);
-
-        }
-
-
+//      steering_motor(3000);
+//      vehicle_status_func();
+//       up_down(2);
       ros::spinOnce();
       loop_rate.sleep();
     }
@@ -364,6 +281,21 @@ public:
 
   /*****************status reflection********************/
 
+  Eigen::Matrix<double,2,1> frame_world_to_vehicle_func(Eigen::Matrix<double,2,1> desire_world_pos,
+                                                        Eigen::Matrix<double,2,1> actual_world_pos,
+                                                        double world_orientation)
+  {
+    Eigen::Matrix<double,2,1> pos_in_vehicle_frame_express_in_world = desire_world_pos - actual_world_pos;
+    Eigen::Matrix<double,2,2> rotation_world_to_vehicle;
+
+    rotation_world_to_vehicle<<
+        cos(world_orientation), -sin(world_orientation),
+        sin(world_orientation),  cos(world_orientation);
+
+    Eigen::Matrix<double,2,1> pos_in_vehicle_frame = rotation_world_to_vehicle.inverse() * pos_in_vehicle_frame_express_in_world;
+    return pos_in_vehicle_frame;
+  }
+
   void odometer_func()
   {
     int j;
@@ -401,7 +333,7 @@ public:
 
 //      angle_double = angle;
       angle_double = -pi/180 * (angle/100);
-//      std::cout << angle_double <<std::endl;
+      std::cout << angle_double <<std::endl;
 
 //      std::cout << speed_double <<std::endl;
       double agv_Linear_velocity  = speed_double*cos(angle_double);
@@ -444,25 +376,25 @@ public:
           backward = rec[j].Data[0] & 0x02;
 //          mode = rec[j].Data[0] & 0x10;
           angle=(rec[j].Data[2]<<8)|rec[j].Data[3];
-//          std::cout << "angle: " <<angle << " deg" <<std::endl;
+          std::cout << "angle: " <<angle << " deg" <<std::endl;
           power = rec[j].Data[1];
           if(power < 20){
-//            std::cout << "power: " <<power << "%" <<std::endl;
+            std::cout << "power: " <<power << "%" <<std::endl;
             ROS_ERROR("Low battery, please charge");
             exit(-1);
           }
           else{
-//            std::cout << "power: " <<power << "%" <<std::endl;
+            std::cout << "power: " <<power << "%" <<std::endl;
           }
         }
         if(forward == 1){
           speed = speed;
-//          std::cout << "1" <<std::endl;
+          std::cout << "1" <<std::endl;
 
         }
         if(backward ==1){
           speed = speed;
-//          std::cout << "0" <<std::endl;
+          std::cout << "0" <<std::endl;
 
         }
 
@@ -478,7 +410,6 @@ public:
   {
     control_thread_ -> join();
     odometer_thread_ -> join();
-    interpolation_thread_ ->join();
   }
   /*****************thread waiting********************/
 

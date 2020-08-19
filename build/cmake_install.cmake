@@ -141,6 +141,7 @@ if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   include("/home/zzz/laser_navigation/build/scan_tools-indigo/laser_scan_matcher/cmake_install.cmake")
   include("/home/zzz/laser_navigation/build/scan_tools-indigo/polar_scan_matcher/cmake_install.cmake")
   include("/home/zzz/laser_navigation/build/scan_tools-indigo/scan_to_cloud_converter/cmake_install.cmake")
+  include("/home/zzz/laser_navigation/build/singleSteeringWheelDriver/cmake_install.cmake")
 
 endif()
 

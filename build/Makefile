@@ -2180,6 +2180,19 @@ scan_to_cloud_converter_node/fast:
 	$(MAKE) -f scan_tools-indigo/scan_to_cloud_converter/CMakeFiles/scan_to_cloud_converter_node.dir/build.make scan_tools-indigo/scan_to_cloud_converter/CMakeFiles/scan_to_cloud_converter_node.dir/build
 .PHONY : scan_to_cloud_converter_node/fast
 
+#=============================================================================
+# Target rules for targets named singleSteeringWheelDriver
+
+# Build rule for target.
+singleSteeringWheelDriver: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 singleSteeringWheelDriver
+.PHONY : singleSteeringWheelDriver
+
+# fast build rule for target.
+singleSteeringWheelDriver/fast:
+	$(MAKE) -f singleSteeringWheelDriver/CMakeFiles/singleSteeringWheelDriver.dir/build.make singleSteeringWheelDriver/CMakeFiles/singleSteeringWheelDriver.dir/build
+.PHONY : singleSteeringWheelDriver/fast
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -2348,6 +2361,7 @@ help:
 	@echo "... polar_scan_matcher"
 	@echo "... psm_node"
 	@echo "... scan_to_cloud_converter_node"
+	@echo "... singleSteeringWheelDriver"
 .PHONY : help
 
 

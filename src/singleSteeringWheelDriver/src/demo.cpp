@@ -67,7 +67,7 @@ public:
    wheel_base(1.415),
    delta_t(0.01),
    old_odometer(0,0,0),
-   world_pos_command_x_y(0,0),
+   world_pos_command_x_y(2,1),
    listener(ros::Duration(10)),
    symbol(false)
   {
@@ -265,30 +265,15 @@ public:
            double dx = temp_goal_base_link.pose.position.x;
            double dy = temp_goal_base_link.pose.position.y;
            double dtheta = atan2(dy, dx);
-           if(fabs(dtheta) > pi/2){
-             if(dtheta < 0){
-               dtheta = dtheta + pi;
-               std::cout << dtheta << std::endl;
-             }
 
-           }
-//           if(fabs(dtheta) > 0.8){
-//             walking_motor(0, 0x01);
-//             steering_motor(dtheta*18000/pi);
+           if(fabs(dtheta) > 0.8){
+             walking_motor(0, 0x01);
+             steering_motor(dtheta*18000/pi);
 
-//           }else{
-//             walking_motor(100, 0x01);
-//             steering_motor(dtheta*18000/pi);
-//           }
-
-           if(dx > 0){
+           }else{
              walking_motor(100, 0x01);
              steering_motor(dtheta*18000/pi);
            }
-           if(dx < 0 )
-            walking_motor(100, 0x02);
-            steering_motor(dtheta*18000/pi);
-
         }
 
 
